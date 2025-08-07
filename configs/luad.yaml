@@ -1,0 +1,4 @@
+dataset_name: 'luad'
+paths: 
+  train_data_folder: "path/to/folder"
+  train_annotation_folder: "path/to/annotations" 

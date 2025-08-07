@@ -1,0 +1,3 @@
+[submodule "src/externals/taming-transformers"]
+	path = src/externals/taming-transformers
+	url = https://github.com/CompVis/taming-transformers

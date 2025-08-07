@@ -1,0 +1,16 @@
+paths:
+  train_dir: "/project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/LUAD-HistoSeg/training"
+  val_img_dir: "/project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/LUAD-HistoSeg/val/img"
+  val_mask_dir: "/project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/LUAD-HistoSeg/val/mask" 
+
+device: "cuda:0"
+num_classes: 4
+batch_size: 128
+epochs: 10
+learning_rate: 0.001
+image_size: 320
+save_path: "models/weakly_seg/token_cam_cnn.pth"
+
+vqgan:
+  config_path: "src/externals/taming-transformers/logs/vqgan_gumbel_f8/configs/model.yaml"
+  ckpt_path: "src/externals/taming-transformers/logs/vqgan_gumbel_f8/checkpoints/last.ckpt"
