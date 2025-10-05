@@ -1,6 +1,7 @@
-[submodule "src/externals/taming-transformers"]
-	path = src/externals/taming-transformers
-	url = https://github.com/CompVis/taming-transformers
-[submodule "ViLa-MIL"]
-	path = ViLa-MIL
+
+[submodule "src/externals/ViLa-MIL_Code"]
+	path = src/externals/ViLa-MIL_Code
 	url = https://github.com/Jiangbo-Shi/ViLa-MIL
+[submodule "src/externals/PBIP_Code"]
+	path = src/externals/PBIP_Code
+	url = https://github.com/QingchenTang/PBIP

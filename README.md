@@ -1,93 +1,92 @@
+## 🛠️ Installation
 
+### Requirements
+- Python 3.8+
+- PyTorch 1.9+
+- CUDA 11.0+ (for GPU training)
 
-# 🔬 WSSS-01: Weakly Supervised Segmentation Framework
+### Environment Setup
 
-## 📁 1. Using External Libraries
-
-To use an external repository (e.g., `taming-transformers`) as a submodule:
-
-### ➕ Add Submodule
+#### Using requirements.txt
 ```bash
-git submodule add https://github.com/CompVis/taming-transformers.git src/externals/taming-transformers
+# Create virtual environment
+conda create -n pbip python=3.11.4
+conda activate pbip
+
+# Install exact dependencies (recommended for reproducibility)
+pip install -r requirements.txt
 ```
-This command adds the repository under src/externals/taming-transformers.
 
+## 📊 Dataset
 
-### 🔧 Update .gitmodules
-The .gitmodules file will automatically be updated with: 
-```bash 
-[submodule "src/externals/taming-transformers"]
-    path = src/externals/taming-transformers
-    url = https://github.com/CompVis/taming-transformers.git
+This project uses the **BCSS (Breast Cancer Semantic Segmentation)** dataset with 5 tissue classes:
+
+| Class | Description | Color |
+|-------|-------------|-------|
+| TUM | Tumor | 🔴 Red |
+| STR | Stroma | 🟢 Green |
+| LYM | Lymphocyte | 🔵 Blue |
+| NEC | Necrosis | 🟣 Purple |
+| BACK | Background | ⚪ White |
+
+### Data Structure
 ```
-### Commit Changes 
-
-```bash 
-git add .gitmodules src/externals/taming-transformers
-git commit -m "Add taming-transformers as a submodule under src/externals/"
-git push origin main
+data/
+├── BCSS-WSSS/
+│   ├── train/
+│   │   └── *.png  # Training images with class labels in filename
+│   ├── test/
+│   │   ├── img/   # Test images
+│   │   └── mask/  # Ground truth masks
+│   └── valid/
+│       ├── img/   # Validation images
+│       └── mask/  # Ground truth masks
 ```
-### 📥 Clone & Initialize Submodules (for others) 
-After cloning the repo, other users must run:
 
-```bash 
-git submodule update --init --recursive
-```
- 
-## ⚙️ 2. Configuration Files
-`configs/datasetname.yaml`: Dataset-specific settings (e.g., file paths, image size).
-`configs/model_datasetname.yaml`: Combined model and dataset config (e.g., architecture, training parameters). 
+# Weakly Supervised Semantic Segmentation (WSSS) with ViLa-PIP
 
-## 🛠 3. Makefile Targets 
-### a. Data processing: For example we want to run VQGAN on LUAD and save the result: 
-```bash 
-quantizing_luad:
-	python main_quantizing.py --configs configs/luad.yaml
-``` 
-```bash 
-make quantizing_luad 
-``` 
-### b. Training
-Train a model (e.g., SillyModel) on LUAD: 
-📌 Note:
-k_start=1, k_end=1 → run only fold 1
-k_start=1, k_end=5 → run  fold 1, 2, 3, 4, 5 
-You can adjust --epoch to control the number of training epochs
-```bash 
-sillymodel_luad:
-	python main_train_silly_model.py --configs configs/sillymodel_luad.yaml --k_start 0 --k_end 1 --epoch 100
-``` 
-```bash 
-make sillymodel_luad
-``` 
- 
-### b. Test
-To evaluate a trained model checkpoint:
+This repository contains the source code and scripts for a Weakly Supervised Semantic Segmentation (WSSS) project using the ViLa-PIP framework. The project focuses on feature extraction, model training, and inference for binary masks and CAM heatmaps on the BCSS dataset. Last updated: 01:54 AM +07, Monday, October 06, 2025.
 
-```bash 
-test_sillymodel_luad:
-	python main_test_silly_model.py \
-		--configs configs/sillymodel_luad.yaml \
-		--k_start 0 --k_end 1 \
-		--checkpoint results/sillymodel_luad/fold_0/best_model.pt 
-``` 
-```bash 
-make test_sillymodel_luad
-```  
+## Overview
+- **Feature Extraction**: Extracts features from the training dataset using a pre-trained model.
+- **Training**: Trains a classification model with a specified configuration.
+- **Inference**: Generates binary masks and CAM heatmaps for segmentation tasks.
 
-### Repo Structure: 
-```
-.
-├── src/
-│   ├── externals/
-│   │   └── taming-transformers/     # Submodule
-│   └── models/                      # Your model definitions
-├── configs/
-│   ├── luad.yaml                    # Dataset-only config
-│   ├── sillymodel_luad.yaml         # Model + dataset config
-├── main_quantizing.py               # For feature quantization
-├── main_train_silly_model.py       # Training script
-├── main_test_silly_model.py        # Evaluation script
-└── Makefile                         # Shortcuts for running tasks
- 
-```
+## Prerequisites
+- **Python**: Version 3.7 or higher
+- **Dependencies**:
+  - `torch` (with CUDA support recommended)
+  - `numpy`
+  - `omegaconf`
+  - `h5py`
+  - `pillow`
+  - `tqdm`
+  - `albumentations`
+  - `matplotlib`
+- **Hardware**: CUDA-enabled GPU (recommended for training and inference)
+- **Environment**: Virtual environment (e.g., using `venv` or `conda`)
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd <repository-directory>
+
+2. Install dependencies:
+pip install torch torchvision numpy omegaconf h5py pillow tqdm albumentations matplotlib
+
+
+
+### Running the Commands
+1. Feature Extraction for Folder Training:
+python path\features_extraction\patch_extraction.py --embeddings_dir path\features_extraction\dataset_features_extraction --model_name resnet50_trunc_1024 --batch_size 1 --overwrite
+
+
+2. Train:
+python path\train\train_training_dataset.py --config path\work_dirs\bcss_wsss\classification\config.yaml --gpu 0
+
+3. Inference Binary Mask:
+python path\inference\inference_binary_mask.py
+
+4. Inference CAM Heatmap:
+python path\inference\inference_cam.py
