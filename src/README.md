@@ -77,54 +77,12 @@ pip install torch torchvision numpy omegaconf h5py pillow tqdm albumentations ma
 
 
 
-### Source Code Structure
-|_ src
-  |_ modified_externals
-    |_ ViLa-PIP
-      |_ features_extraction/
-      | |_ patch_extraction.py
-      |_ train/
-      | |_ train_training_dataset.py
-      |_ inference/
-      | |_ inference_binary_mask.py
-      | |_ inference_cam.py
-      |_ work_dirs/
-      | |_ bcss_wsss/
-      |   |_ classification/
-      |     |_ config.yaml
-      |_ datasets/
-      | |_ BCSS-WSSS/
-      |   |_ training/
-      |   | |_ img/
-      |   |   |_ TCGA-A1-A0SK-DX1_xmin45749_ymin25055_MPP-0.2500+0[1101]
-      |   |_ val/
-      |   | |_ img/
-      |   | | |_ TCGA-D8-A27F-DX1_xmin98787_ymin6725_MPP-0.2500+0
-      |   | |_ mask/
-      |   |   |_ TCGA-D8-A27F-DX1_xmin98787_ymin6725_MPP-0.2500+0
-      |   |_ test/
-      |     |_ img/
-      |     | |_ TCGA-EW-A1PB-DX1_xmin57214_ymin25940_MPP-0.2500+0
-      |     |_ mask/
-      |       |_ TCGA-EW-A1PB-DX1_xmin57214_ymin25940_MPP-0.2500+0
-      |_ model/
-      | |_ model_ViLa_MIL.py
-      | |_ projector.py
-      | |_ model.py
-      |_ utils/
-        |_ fgbg_feature.py
-        |_ contrast_loss.py
-        |_ hierarchical_utils.py
-
-
 ### Running the Commands
 1. Feature Extraction for Folder Training:
-Extracts features from the training dataset using a pre-trained resnet50_trunc_1024 model.
 python path\features_extraction\patch_extraction.py --embeddings_dir path\features_extract\and\VA\lion\dataset_features_extraction --model_name resnet50_trunc_1024 --batch_size 1 --overwrite
 
 
 2. Train:
-Trains the model using the provided configuration file on GPU 0.
 python path\train\train_training_dataset.py --config path\work_dirs\bcss_wsss\classification\config.yaml --gpu 0
 
 3. Inference Binary Mask:
