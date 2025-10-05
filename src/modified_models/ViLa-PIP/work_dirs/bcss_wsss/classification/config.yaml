@@ -1,0 +1,55 @@
+model:
+  backbone:
+    config: SegFormer  # Sử dụng SegFormer làm backbone
+    model_name: nvidia/mit-b5  # Cụ thể hóa model SegFormer
+    stride: [4, 2, 2, 1]  # Stride của backbone
+    pretrained_weights: true  # Sử dụng pretrained weights
+  label_feature_path:
+    - D:\NghienCuu\NghienCuuPaper\Source_Code\WSSS-01\src\modified_externals\ViLa-PIP\features_extraction\dataset_features_extraction  # Thư mục chứa các file H5
+  n_ratio: 1.0  # Tỷ lệ đặc trưng
+  input_size: [224, 224]  # Kích thước đầu vào
+  text_prompt:
+    - "A WSI of Tumor with visually descriptive characteristics of irregularly shaped regions, dense cellularity, heterogeneous staining, and distortion of adjacent structures due to growth, as well as atypical cells, enlarged nuclei, prominent nucleoli, high nuclear-to-cytoplasmic ratio, and mitotic figures."
+    - "A WSI of Stroma with visually descriptive characteristics of fibrous connective tissue, lighter staining, low cellular density, and surrounding or infiltrating tumor areas, as well as elongated fibroblasts, collagen bundles, eosinophilic matrix, blood vessels, and occasional inflammatory cells."
+    - "A WSI of Lymphocyte with visually descriptive characteristics of small dark clusters or infiltrates, often at tumor-stroma interfaces, appearing as speckled blue-purple areas, as well as small round cells, hyperchromatic nuclei, scant cytoplasm, and clustering in immune responses."
+    - "A WSI of Necrosis with visually descriptive characteristics of pale amorphous zones, loss of structure, hypoeosinophilic appearance, and contrast with viable tissue, as well as cellular debris, karyorrhectic nuclei, cytoplasmic remnants, and infiltration by inflammatory cells."
+  prototype_number: 3  # Số lượng prototype
+
+dataset:
+  name: bcss
+  train_root: D:\NghienCuu\NghienCuuPaper\Source_Code\data\data_BCSS-WSSS\BCSS-WSSS\training
+  val_root: D:\NghienCuu\NghienCuuPaper\Source_Code\data\data_BCSS-WSSS\BCSS-WSSS\val
+  test_root: D:\NghienCuu\NghienCuuPaper\Source_Code\data\data_BCSS-WSSS\BCSS-WSSS\test
+  cls_num_classes: 4  # 4 foreground + 1 background
+  input_size: [224, 224]  # Kích thước đầu vào
+
+work_dir:
+  ckpt_dir: E:\Inference_Checkpoint\Checkpoints
+  pred_dir: E:\Inference_Checkpoint\Predictions
+  result_dir: E:\Inference_Checkpoint\Result
+  csv_dir: E:\Inference_Checkpoint\CSV
+  train_log_dir: train_log
+
+train:
+  samples_per_gpu: 10
+  epoch: 3
+  pretrained: true
+  l1: 0.0
+  l2: 0.1
+  l3: 1.0
+  l4: 1.0
+  l5: 0.1
+  mask_adapter_alpha: 0.5
+  merge_train: mean
+  merge_test: max
+
+optimizer:
+  type: AdamW
+  learning_rate: 0.00005
+  betas: [0.9, 0.999]
+  weight_decay: 0.001
+
+scheduler:
+  warmup_iter: 0
+  warmup_ratio: 1.0e-06
+  power: 1.0
