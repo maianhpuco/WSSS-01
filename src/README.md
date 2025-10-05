@@ -79,7 +79,7 @@ pip install torch torchvision numpy omegaconf h5py pillow tqdm albumentations ma
 
 ### Running the Commands
 1. Feature Extraction for Folder Training:
-python path\features_extraction\patch_extraction.py --embeddings_dir path\features_extract\and\VA\lion\dataset_features_extraction --model_name resnet50_trunc_1024 --batch_size 1 --overwrite
+python path\features_extraction\patch_extraction.py --embeddings_dir path\features_extraction\dataset_features_extraction --model_name resnet50_trunc_1024 --batch_size 1 --overwrite
 
 
 2. Train:
