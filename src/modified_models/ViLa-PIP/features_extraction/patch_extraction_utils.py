@@ -20,7 +20,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 import sys
 import os
 # Add root directory to Python path
-ROOT_FOLDER = r"D:\NghienCuu\NghienCuuPaper\Source_Code\WSSS-01\src\modified_externals\ViLa-PIP"
+ROOT_FOLDER = r"D:\NghienCuu\NghienCuuPaper\Source_Code\WSSS-01\src\modified_models\ViLa-PIP"
 sys.path.insert(0, ROOT_FOLDER)
 # Import from bcss_wsss.py
 from datasets.bcss_wsss import BCSS_WSSSTrainingDataset, BCSS_WSSS_TestDataset, BCSSWSSSDataset
@@ -99,13 +99,13 @@ class PatchesDataset(Dataset):
             full_path = os.path.join(BASE_DIR, "training", img_path)
             mask = None
         elif dataset_name == "test":
-            img_path, _, _, _ = self.test_dataset[dataset_idx]
+            img_path, _, _, mask_data = self.test_dataset[dataset_idx]
             full_path = os.path.join(BASE_DIR, "test", "img", img_path)
-            mask = Image.open(mask_path).convert('L') if mask_path else None
+            mask = mask_data if mask_data is not None else torch.zeros((224, 224), dtype=torch.float32)
         elif dataset_name == "val":
-            img_path, _, _, _ = self.val_dataset[dataset_idx]
+            img_path, _, _, mask_data = self.val_dataset[dataset_idx]
             full_path = os.path.join(BASE_DIR, "val", "img", img_path)
-            mask = Image.open(mask_path).convert('L') if mask_path else None
+            mask = mask_data if mask_data is not None else torch.zeros((224, 224), dtype=torch.float32)
         # Load image
         try:
             img = Image.open(full_path).convert('RGB')
@@ -114,8 +114,11 @@ class PatchesDataset(Dataset):
             raise
         if self.transform is not None:
             img = self.transform(img)
-            if mask is not None:
-                mask = self.transform(mask)
+            # Apply transform to mask only if it exists and is a tensor
+            if mask is not None and not isinstance(mask, torch.Tensor):
+                mask = transforms.ToTensor()(mask)
+            elif mask is None:
+                mask = torch.zeros((1, 224, 224), dtype=torch.float32)  # Default mask as zero tensor
         coord = torch.tensor(self.coords[index], dtype=torch.float32)
         mpp = self.mpps[index]
         return img, mask, coord, slide_id, cls_label, mpp
