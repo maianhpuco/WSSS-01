@@ -6,7 +6,7 @@ model:
     - 2
     - 2
     - 1
-  label_feature_path: ./src/externals/PBIP/features/bcss_label_fea_pro_3333.pkl
+  label_feature_path: ./src/externals/PBIP/features/image_features/bcss_label_fea_pro_3333.pkl
   n_ratio: 0.5
 dataset:
   name: bcss
