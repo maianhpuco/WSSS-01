@@ -4,3 +4,6 @@
 [submodule "src/externals/PBIP"]
 	path = src/externals/PBIP
 	url = https://github.com/tom1209-netizen/PBIP.git
+[submodule "src/externals/TPRO"]
+	path = src/externals/TPRO
+	url = https://github.com/zhangst431/TPRO
