@@ -10,7 +10,7 @@ model:
   n_ratio: 0.5
 dataset:
   name: bcss
-  train_root: /project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/BCSS-WSSS/train
+  train_root: /project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/BCSS-WSSS/training
   val_root: /project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/BCSS-WSSS/
   cls_num_classes: 4
   input_size:
@@ -24,6 +24,7 @@ train:
   samples_per_gpu: 10
   epoch: 8
   pretrained: true
+  pretrained_path: ./src/externals/PBIP/pretrained/
   l1: 0.0
   l2: 0.1
   l3: 1.0
