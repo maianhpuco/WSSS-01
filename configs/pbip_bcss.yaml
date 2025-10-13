@@ -24,7 +24,7 @@ train:
   samples_per_gpu: 10
   epoch: 8
   pretrained: true
-  pretrained_path: ./src/externals/PBIP/pretrained/
+  pretrained_path: ./src/externals/PBIP/pretrained/mit_b1.pth
   l1: 0.0
   l2: 0.1
   l3: 1.0
