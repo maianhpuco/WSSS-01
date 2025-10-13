@@ -1,3 +1,6 @@
 [submodule "src/externals/taming-transformers"]
 	path = src/externals/taming-transformers
 	url = https://github.com/CompVis/taming-transformers
+[submodule "src/externals/PBIP"]
+	path = src/externals/PBIP
+	url = https://github.com/tom1209-netizen/PBIP.git
