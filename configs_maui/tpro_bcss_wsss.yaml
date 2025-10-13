@@ -1,0 +1,46 @@
+tpro:
+  root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO
+  modify_root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/external_modify/TPRO
+dataset:
+  name: bcss
+  source_root: /project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/BCSS-WSSS
+  splits:
+    train: training
+    valid: val
+    test: test
+  pseudo_label_dir_name: pseudo_label
+model:
+  classification:
+    base_config: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/work_dirs/bcss/classification/config.yaml
+    backbone: mit_b1
+    stride: [4, 2, 2, 1]
+    label_feature_file: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/text&features/text_features/medclip/bcss_label_fea.pkl
+    knowledge_feature_file: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/text&features/text_features/clinical_bert/bcss_knowledge_fea.pkl
+    n_ratio: 0.5
+    pretrained: /project/hnguyen2/mvu9/wsss_workingdir/pretrained/mit_b1.pth
+  pseudo_label:
+    split: train
+    palette_path: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/datasets/luad_palette.npy
+    gpu: 0
+  segmentation:
+    base_config: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/work_dirs/bcss/segmentation/config.yaml
+    backbone: mit_b2
+    stride: [4, 2, 2, 1]
+    seg_num_classes: 5
+    pretrained: /project/hnguyen2/mvu9/wsss_workingdir/pretrained/segformer.b2.512x512.ade.160k.pth
+work_dir:
+  root: /project/hnguyen2/mvu9/wsss_workingdir/trpo
+  ckpt_dir: /project/hnguyen2/mvu9/wsss_workingdir/ckpt_dir
+  pred_dir: /project/hnguyen2/mvu9/wsss_workingdir/predictions
+  train_log_dir: /project/hnguyen2/mvu9/wsss_workingdir/train_log
+runtime:
+  classification:
+    cuda_visible_devices: "0,1"
+    nproc_per_node: 2
+    master_port: 16372
+    wandb_log: false
+  segmentation:
+    cuda_visible_devices: "0,1"
+    nproc_per_node: 2
+    master_port: 17362
+    wandb_log: false

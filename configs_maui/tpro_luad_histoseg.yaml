@@ -1,0 +1,3 @@
+dataset:
+  name: bcss-wsss
+  train_root: /project/hnguyen2/mvu9/datasets/weakly_sup_segmentation_datasets/LUAD-HistoSeg/ 
