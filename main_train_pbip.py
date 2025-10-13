@@ -94,6 +94,7 @@ def train(cfg):
                     cls_num_classes=cfg.dataset.cls_num_classes,
                     n_ratio=cfg.model.n_ratio,
                     pretrained=cfg.train.pretrained,
+                    pretrained_path=cfg.train.pretrained_path,
                     l_fea_path=cfg.model.label_feature_path)
     
     # Mixed precision training setup

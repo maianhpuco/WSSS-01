@@ -15,7 +15,7 @@ test_sillymodel_luad:
 	main_train_silly_model.py --configs configs/sillymodel_luad.yaml --check_point $(SILLYMODEL_CKPT) 
 
 train_pbip_bcss:
-	$(PYTHON) main_train_pbip.py --configs configs/pbip_bcss.yaml --gpu 0
+	$(PYTHON) main_train_pbip.py --config configs/pbip_bcss.yaml --gpu 0
 
 test_pbip_bcss:
-	$(PYTHON) main_test_pbip.py --configs configs/pbip_bcss.yaml --check_point $(PBIPMODEL_CKPT)
+	$(PYTHON) main_test_pbip.py --config configs/pbip_bcss.yaml --check_point $(PBIPMODEL_CKPT)
