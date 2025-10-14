@@ -7,3 +7,6 @@
 [submodule "src/externals/TPRO"]
 	path = src/externals/TPRO
 	url = https://github.com/zhangst431/TPRO
+[submodule "src/externals/QA-CLIMS"]
+	path = src/externals/QA-CLIMS
+	url = https://github.com/CVI-SZU/QA-CLIMS.git

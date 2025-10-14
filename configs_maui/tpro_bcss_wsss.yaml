@@ -11,7 +11,49 @@ dataset:
   pseudo_label_dir_name: pseudo_label
 model:
   classification:
-    base_config: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/work_dirs/bcss/classification/config.yaml
+    config_file:
+      model:
+        backbone:
+          config: mit_b1
+          stride:
+          - 4
+          - 2
+          - 2
+          - 1
+        label_feature_path: medclip/bcss_label_fea
+        knowledge_feature_path: clinical_bert/bcss_knowledge_fea
+        n_ratio: 0.5
+      dataset:
+        name: bcss
+        train_root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/data/BCSS-WSSS/train/img
+        val_root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/data/BCSS-WSSS
+        cls_num_classes: 4
+        input_size:
+        - 224
+        - 224
+      work_dir:
+        ckpt_dir: /project/hnguyen2/mvu9/wsss_workingdir/ckpt_dir/classification
+        pred_dir: /project/hnguyen2/mvu9/wsss_workingdir/predictions/classification
+        train_log_dir: /project/hnguyen2/mvu9/wsss_workingdir/train_log/classification
+      train:
+        samples_per_gpu: 10
+        epoch: 8 #8
+        pretrained: true
+        l1: 0.0
+        l2: 0.1
+        l3: 1.0
+        l4: 1.0
+      optimizer:
+        type: AdamW
+        learning_rate: 0.0001
+        betas:
+        - 0.9
+        - 0.999
+        weight_decay: 0.001
+      scheduler:
+        warmup_iter: 0
+        warmup_ratio: 1.0e-06
+        power: 1.0
     backbone: mit_b1
     stride: [4, 2, 2, 1]
     label_feature_file: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/text&features/text_features/medclip/bcss_label_fea.pkl
@@ -23,7 +65,44 @@ model:
     palette_path: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/datasets/luad_palette.npy
     gpu: 0
   segmentation:
-    base_config: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/work_dirs/bcss/segmentation/config.yaml
+    config_file:
+      model:
+        backbone:
+          config: mit_b3
+          stride:
+          - 4
+          - 2
+          - 2
+          - 1
+      dataset:
+        name: bcss
+        train_root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/data/BCSS-WSSS/train
+        val_root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/data/BCSS-WSSS
+        mask_root: /project/hnguyen2/mvu9/folder_04_ma/WSSS-01/src/externals/TPRO/work_dirs/bcss/classification/predictions
+        seg_num_classes: 5
+        input_size:
+        - 224
+        - 224
+      work_dir:
+        ckpt_dir: /project/hnguyen2/mvu9/wsss_workingdir/ckpt_dir/segmentation
+        pred_dir: /project/hnguyen2/mvu9/wsss_workingdir/predictions/segmentation
+        train_log_dir: /project/hnguyen2/mvu9/wsss_workingdir/train_log/segmentation
+      train:
+        samples_per_gpu: 10
+        epoch: 8
+        log_iters: 10
+        pretrained: true
+      optimizer:
+        type: AdamW
+        learning_rate: 0.0001
+        betas:
+        - 0.9
+        - 0.999
+        weight_decay: 0.001
+      scheduler:
+        warmup_iter: 0
+        warmup_ratio: 1.0e-06
+        power: 1.0
     backbone: mit_b2
     stride: [4, 2, 2, 1]
     seg_num_classes: 5

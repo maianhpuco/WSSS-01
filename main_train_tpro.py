@@ -1,10 +1,21 @@
 import argparse
+import copy
+import datetime
 import os
 import sys
-import yaml
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from types import SimpleNamespace
+from typing import Any, Dict, List, Optional, Union
+
+import torch
+import yaml
+from omegaconf import OmegaConf
+
+REPO_ROOT = Path(__file__).resolve().parent
+TPRO_SRC = (REPO_ROOT / "src" / "externals" / "TPRO").resolve()
+if str(TPRO_SRC) not in sys.path:
+    sys.path.insert(0, str(TPRO_SRC))
 
 
 def load_yaml(path: Path) -> Dict[str, Any]:
@@ -66,10 +77,17 @@ def prepare_dataset_structure(cfg: Dict[str, Any], tpro_root: Path) -> Path:
     return data_root
 
 
-def create_stage_config(base_cfg_path: Path,
+def create_stage_config(base_cfg_source: Union[Path, Dict[str, Any]],
                         overrides: Dict[str, Any],
                         output_path: Path) -> Dict[str, Any]:
-    base_cfg = load_yaml(base_cfg_path)
+    if isinstance(base_cfg_source, Path):
+        base_cfg = load_yaml(base_cfg_source)
+    elif isinstance(base_cfg_source, dict):
+        base_cfg = copy.deepcopy(base_cfg_source)
+    else:
+        raise TypeError(
+            f"Unsupported base config source type: {type(base_cfg_source)!r}"
+        )
 
     def deep_merge(dst: Dict[str, Any], src: Dict[str, Any]) -> Dict[str, Any]:
         for key, value in src.items():
@@ -110,6 +128,62 @@ def run_distributed(stage_name: str,
 
     print(f"[TPRO][{stage_name}] Running: {' '.join(cmd)}")
     subprocess.run(cmd, cwd=cwd, env=env, check=True)
+
+
+def run_classification_inprocess(config_path: Path,
+                                 runtime_cfg: Dict[str, Any]) -> None:
+    from src.externals.TPRO import train_cls as train_cls_module
+
+    cfg = OmegaConf.load(str(config_path))
+    cfg.work_dir.dir = os.path.dirname(str(config_path))
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+    cfg.work_dir.ckpt_dir = os.path.join(cfg.work_dir.dir, cfg.work_dir.ckpt_dir, timestamp)
+    cfg.work_dir.pred_dir = os.path.join(cfg.work_dir.dir, cfg.work_dir.pred_dir)
+    cfg.work_dir.train_log_dir = os.path.join(cfg.work_dir.dir, cfg.work_dir.train_log_dir)
+
+    os.makedirs(cfg.work_dir.dir, exist_ok=True)
+    os.makedirs(cfg.work_dir.ckpt_dir, exist_ok=True)
+    os.makedirs(cfg.work_dir.pred_dir, exist_ok=True)
+    os.makedirs(cfg.work_dir.train_log_dir, exist_ok=True)
+
+    cuda_devices = runtime_cfg.get("cuda_visible_devices")
+    if cuda_devices:
+        if isinstance(cuda_devices, str):
+            primary_device = cuda_devices.split(",")[0].strip()
+            os.environ["CUDA_VISIBLE_DEVICES"] = primary_device or cuda_devices
+        else:
+            os.environ["CUDA_VISIBLE_DEVICES"] = str(cuda_devices)
+
+    backend = runtime_cfg.get("backend", "nccl")
+    if backend == "nccl" and not torch.cuda.is_available():
+        backend = "gloo"
+
+    os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
+    os.environ["MASTER_PORT"] = str(runtime_cfg.get("master_port", 16372))
+    os.environ["WORLD_SIZE"] = "1"
+    os.environ["RANK"] = "0"
+    os.environ["LOCAL_RANK"] = "0"
+
+    args_namespace = SimpleNamespace(
+        config=str(config_path),
+        local_rank=0,
+        backend=backend,
+        wandb_log=bool(runtime_cfg.get("wandb_log", False)),
+    )
+    train_cls_module.args = args_namespace
+
+    if args_namespace.local_rank == 0:
+        if args_namespace.wandb_log:
+            train_cls_module.wandb.init(project=f"TPRO-{cfg.dataset.name}-cls")
+        train_cls_module.setup_logger(
+            filename=os.path.join(cfg.work_dir.train_log_dir, timestamp + ".log")
+        )
+        train_cls_module.logging.info("\nargs: %s", args_namespace)
+        train_cls_module.logging.info("\nconfigs: %s", cfg)
+
+    train_cls_module.set_seed(0)
+    train_cls_module.train(cfg=cfg)
 
 
 def find_checkpoint(ckpt_root: Path, filename: str) -> Path:
@@ -169,6 +243,14 @@ def main() -> None:
 
     # Prepare classification config
     cls_model_cfg = cfg["model"]["classification"]
+
+    def resolve_base_config(stage_cfg: Dict[str, Any]) -> Union[Path, Dict[str, Any]]:
+        if "config_file" in stage_cfg:
+            return stage_cfg["config_file"]
+        if "base_config" in stage_cfg:
+            return Path(stage_cfg["base_config"]).resolve()
+        raise KeyError("Either 'config_file' or 'base_config' must be provided in stage configuration.")
+
     feature_base_dir = (tpro_root / "text&features/text_features").resolve()
     label_feature_file = Path(cls_model_cfg["label_feature_file"]).resolve()
     knowledge_feature_file = Path(cls_model_cfg["knowledge_feature_file"]).resolve()
@@ -206,8 +288,8 @@ def main() -> None:
     }
 
     cls_config_output = stage_config_root / "classification" / "config.generated.yaml"
-    cls_base_config_path = Path(cls_model_cfg["base_config"]).resolve()
-    create_stage_config(cls_base_config_path, cls_cfg_overrides, cls_config_output)
+    cls_base_config_source = resolve_base_config(cls_model_cfg)
+    create_stage_config(cls_base_config_source, cls_cfg_overrides, cls_config_output)
 
     pretrained_dir = tpro_root / "pretrained"
     ensure_directory(pretrained_dir)
@@ -227,89 +309,12 @@ def main() -> None:
     seg_model_cfg = cfg["model"]["segmentation"]
     link_pretrained(seg_model_cfg["backbone"], seg_model_cfg.get("pretrained"))
 
-    # Run classification training
-    run_distributed(
-        stage_name="classification-train",
-        script="train_cls.py",
-        config_path=cls_config_output,
-        runtime_cfg=cfg["runtime"]["classification"],
-        cwd=tpro_root,
-    )
+    # Run classification training directly within this process
+    os.chdir(tpro_root)
+    run_classification_inprocess(cls_config_output, cfg["runtime"]["classification"])
 
-    best_cam_ckpt = find_checkpoint(cls_ckpt_root, "best_cam.pth")
-    print(f"[TPRO] Using classification checkpoint: {best_cam_ckpt}")
-
-    # Extract pseudo labels
-    evaluate_cmd = [
-        sys.executable,
-        "evaluate_cls.py",
-        "--dataset",
-        cfg["dataset"]["name"],
-        "--model_path",
-        str(best_cam_ckpt),
-        "--split",
-        pseudo_cfg["split"],
-        "--save_dir",
-        str(pseudo_label_dir.resolve()),
-        "--gpu",
-        str(pseudo_cfg.get("gpu", 0)),
-        "--backbone",
-        cls_model_cfg["backbone"],
-        "--label_feature_path",
-        label_feature_rel,
-        "--knowledge_feature_path",
-        knowledge_feature_rel,
-        "--n_ratio",
-        str(cls_model_cfg["n_ratio"]),
-    ]
-
-    if pseudo_cfg.get("palette_path"):
-        evaluate_cmd.extend(
-            ["--palette_path", str(Path(pseudo_cfg["palette_path"]).resolve())]
-        )
-
-    run_command(
-        stage="pseudo-label",
-        cmd=evaluate_cmd,
-        cwd=tpro_root,
-    )
-
-    # Prepare segmentation config
-    seg_overrides = {
-        "model": {
-            "backbone": {
-                "config": seg_model_cfg["backbone"],
-                "stride": seg_model_cfg["stride"],
-            },
-        },
-        "dataset": {
-            "name": cfg["dataset"]["name"],
-            "train_root": str((data_root / "train").resolve()),
-            "val_root": str(data_root.resolve()),
-            "mask_root": cfg["dataset"]["pseudo_label_dir_name"],
-            "seg_num_classes": seg_model_cfg["seg_num_classes"],
-        },
-        "work_dir": {
-            "ckpt_dir": str(seg_ckpt_root.resolve()),
-            "pred_dir": str(seg_pred_root.resolve()),
-            "train_log_dir": str(seg_log_root.resolve()),
-        },
-    }
-
-    seg_config_output = stage_config_root / "segmentation" / "config.generated.yaml"
-    seg_base_config_path = Path(seg_model_cfg["base_config"]).resolve()
-    create_stage_config(seg_base_config_path, seg_overrides, seg_config_output)
-
-    run_distributed(
-        stage_name="segmentation-train",
-        script="train_seg.py",
-        config_path=seg_config_output,
-        runtime_cfg=cfg["runtime"]["segmentation"],
-        cwd=tpro_root,
-    )
-
-    best_seg_ckpt = find_checkpoint(seg_ckpt_root, "best_seg.pth")
-    print(f"[TPRO] Segmentation training complete. Best checkpoint: {best_seg_ckpt}")
+    # Subsequent stages (pseudo-label extraction and segmentation) will be added later
+    return
 
 
 if __name__ == "__main__":
