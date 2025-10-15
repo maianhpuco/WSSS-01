@@ -3,3 +3,6 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 logs/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
