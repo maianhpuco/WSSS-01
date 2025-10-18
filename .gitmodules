@@ -10,3 +10,7 @@
 [submodule "src/externals/QA-CLIMS"]
 	path = src/externals/QA-CLIMS
 	url = https://github.com/CVI-SZU/QA-CLIMS.git
+[submodule "src/externals/WSSS-Tissue"]
+	path = src/externals/WSSS-Tissue
+	url = https://github.com/ChuHan89/WSSS-Tissue.git
+	branch = main
